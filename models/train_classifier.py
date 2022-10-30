@@ -31,7 +31,7 @@ def load_data(database_filepath):
     y: Categories
     '''
     # load data from database
-    engine = create_engine('sqlite:///' + database_filepath)
+    engine = create_engine('sqlite:///ETL_pipeline.db')
     df = pd.read_sql_table('ETL_pipeline', engine)
 
     X = df.message
@@ -68,8 +68,8 @@ def tokenize(text):
 
 
 def build_model(parameter = {
-    'clf__estimator__n_estimators': [50,100],
-    'clf__estimator__min_samples_split': [2,3]},
+    'clf__estimator__n_estimators': [50,200],
+    'clf__estimator__min_samples_split': [2,4]},
      clf = RandomForestClassifier()):
     '''
     Creates classifier model specified in the Argument
@@ -88,10 +88,11 @@ def build_model(parameter = {
         ('clf', MultiOutputClassifier(clf))
         ])
     
+    parameters = parameter
 
     cv = GridSearchCV(
-        pipeline, param_grid=parameter,
-        n_jobs=-1, verbose=3)
+        pipeline, param_grid=parameters,
+        n_jobs=-1, verbose=2)
     
     return cv
 
