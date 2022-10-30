@@ -1,16 +1,95 @@
 import sys
-
+import pandas as pd
+from sqlalchemy import create_engine 
 
 def load_data(messages_filepath, categories_filepath):
-    pass
+    '''
+    Loads input and labels from csv files and merges them
 
+    Args:
+    messages_filepath: path of messages data
+    categories_filepath: path of categories data
+
+    Return:
+    df: Loaded and merged dataframe
+    '''
+    messages = pd.read_csv(messages_filepath)
+    categories = pd.read_csv(categories_filepath)
+    df = messages.merge(categories, on="id", how="inner")
+    return df
 
 def clean_data(df):
-    pass
+    '''
+    Renames column, drops duplicates and converts category values
+    to 0 and 1
+    
+    Args:
+    df: Merged dataframe
 
+    Return:
+    df: Processed dataframe
+    '''
+    # create a dataframe of the 36 individual category columns
+    categories = df["categories"].str.split(";", expand=True)
+    
+    # select the first row of the categories dataframe
+    row = categories.iloc[0,:]
+
+    # list of new column names for categories.
+    category_colnames = row.apply(lambda x: x[:-2]).values.tolist()
+
+    # rename the columns of `categories`
+    categories.columns = category_colnames
+
+    #Convert category values to just numbers 0 or 1.
+    for column in categories:
+    # set each value to be the last character of the string
+        categories[column] = categories[column].str[-1]
+        
+        # convert column from string to numeric
+        categories[column] = pd.to_numeric(categories[column])
+
+    # To change columns with value greater than 1 to 1
+    # To drop columns with max value of 0
+    for column in categories.columns:
+        if categories.loc[:,column].max()>1:
+            categories.loc[:,column]= categories.loc[:,column].map(
+                lambda x:1 if x>1 else x)
+            
+        if categories.loc[:,column].max()==0:
+            categories.drop([column],axis=1,inplace=True) 
+    
+    # drop the original categories column from `df`
+    df.drop(["categories"], axis=1, inplace=True)
+
+    # concatenate the original dataframe with the new `categories` 
+    # dataframe
+    df = pd.concat([df,categories], axis=1)
+
+    # drop duplicates
+    df = df.drop_duplicates()
+
+    return df
 
 def save_data(df, database_filename):
-    pass  
+    '''
+    Saves the cleaned dataframe as .db file to be used in ML
+    pipeline
+
+    Args:
+    df: Dataframe to be saved as database
+    database_filename: Filename for the database
+
+    Return:
+    None. The file is saved
+    ''' 
+
+    engine = create_engine('sqlite:///' + database_filename)
+    df.to_sql(
+        'ETL_pipeline',
+        engine,
+        index=False,
+        if_exists = "replace")
 
 
 def main():
