@@ -1,8 +1,6 @@
-from symbol import parameters
 import sys
 import pandas as pd
 from sqlalchemy import create_engine
-import os
 import re
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
@@ -16,8 +14,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.multioutput import MultiOutputClassifier
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
-from sqlalchemy import create_engine
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+import pickle
 
 
 def load_data(database_filepath):
@@ -38,8 +36,10 @@ def load_data(database_filepath):
 
     X = df.message
     y = df.iloc[:,4:]
+
+    category_names = y.columns
     
-    return X,y
+    return X, y, category_names
 
 def tokenize(text):
     '''
@@ -67,7 +67,10 @@ def tokenize(text):
     return clean_tokens
 
 
-def build_model(parameter, clf = RandomForestClassifier()):
+def build_model(parameter = {
+    'clf__estimator__n_estimators': [50,200],
+    'clf__estimator__min_samples_split': [2,4]},
+     clf = RandomForestClassifier()):
     '''
     Creates classifier model specified in the Argument
 
@@ -87,16 +90,43 @@ def build_model(parameter, clf = RandomForestClassifier()):
     
     parameters = parameter
 
-    cv = GridSearchCV(pipeline, param_grid=parameters, n_jobs=-1, verbose=2)
+    cv = GridSearchCV(
+        pipeline, param_grid=parameters,
+        n_jobs=-1, verbose=2)
     
     return cv
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    
+    '''
+    Evaluates the model on test data and returns the score
 
+    Args:
+    model: The ML classifier model
+    X_test: Test input features
+    Y_test: Test labels
+    category_names: Output category of the dataset
+
+    Return:
+    Prints precision, recall and F1-score for each output category
+    '''
+    
+    y_pred = model.predict(X_test)
+    print(classification_report(Y_test.values,
+     y_pred, target_names=category_names.values))
 
 def save_model(model, model_filepath):
-    pass
+    '''
+    Saves the ML model as a pickle file
+
+    Args:
+    model: ML model to be saved
+    model_filepath: Save path of the model
+
+    Return:
+    None
+    '''
+    with open(model_filepath, 'wb') as f:
+        pickle.dump(model, f)
 
 
 def main():
