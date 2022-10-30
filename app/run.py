@@ -8,7 +8,11 @@ from nltk.tokenize import word_tokenize
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
-from sklearn.externals import joblib
+try:
+    from sklearn.externals import joblib
+except:
+    import joblib
+
 from sqlalchemy import create_engine
 
 
@@ -86,8 +90,7 @@ def index():
             ],
 
             'layout':{
-                'title': "Distribution of Messages according to .\
-                    categories",
+                'title': "Distribution of Messages according to categories",
                 'yaxis': {
                     'title': 'Count'
                 },
@@ -106,8 +109,7 @@ def index():
             ],
 
             'layout':{
-                'title': "Counts for original and transcribed \
-                    messages",
+                'title': "Counts for original and transcribed messages",
                 'yaxis': {
                     'title': 'Count'
                 },
