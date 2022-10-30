@@ -26,11 +26,11 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/ETL_pipeline.db')
+df = pd.read_sql_table('ETL_pipeline', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("../models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -42,6 +42,18 @@ def index():
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
+
+    # Count for each category
+    category_names = df.iloc[:, 4:].columns
+    category_counts_1 = []
+    
+    for name in category_names:
+        category_counts_1.append(df.loc[:, name].sum())
+
+    # Count for original and transcribed messages
+
+    original_num = (df.message == df.original).sum()
+    transcribed_num = len(df)-original_num
     
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
@@ -61,6 +73,46 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+            
+        {
+            'data': [
+                Bar(
+                    x= category_names,
+                    y= category_counts_1
+                )
+            ],
+
+            'layout':{
+                'title': "Distribution of Messages according to .\
+                    categories",
+                'yaxis': {
+                    'title': 'Count'
+                },
+                'xaxis': {
+                    'title': 'Category'
+                }
+            }
+        },
+
+        {
+            'data': [
+                Bar(
+                    x=['original_num', 'transcribed_num'] ,
+                    y=[original_num, transcribed_num]
+                )
+            ],
+
+            'layout':{
+                'title': "Counts for original and transcribed \
+                    messages",
+                'yaxis': {
+                    'title': 'Count'
+                },
+                'xaxis': {
+                    'title': 'Message type'
                 }
             }
         }
