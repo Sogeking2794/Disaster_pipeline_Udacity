@@ -60,9 +60,15 @@ Creates the ML classifier pipeline that reads the input data, initializes the cl
         `python models/train_classifier.py data/DisasterResponse.db models/classifier.pkl`
 
 2. Run the following command in the app's directory to run your web app.
-    `python run.py`
+    `python run.py`. The web app should now be running if there were no errors.
 
-3. Go to http://0.0.0.0:3001/
+3. Next, open another terminal and type
+    `env|grep WORK`. You will see the **SPACE DOMAIN** and **SPACE ID**
+    
+4. In the new browser window, type in the **SPACE DOMAIN** and **SPACE ID** in the following format,
+    https://`SPACEID`-3001.`SPACEDOMAIN`
+    
+    The web app should open now.
 
 ### Screenshots <a name="Screenshots"> </a>
 
