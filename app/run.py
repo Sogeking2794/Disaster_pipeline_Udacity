@@ -6,15 +6,19 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
 import nltk
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('averaged_perceptron_tagger')
+
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
 try:
-    from sklearn.externals import joblib
-except:
     import joblib
+except:
+    from sklearn.externals import joblib
 from sqlalchemy import create_engine
 
 
@@ -68,6 +72,18 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
+    # Count for each category
+    category_names = df.iloc[:, 4:].columns
+    category_counts_1 = []
+    
+    for name in category_names:
+        category_counts_1.append(df.loc[:, name].sum())
+
+    # Count for original and transcribed messages
+
+    original_num = (df.message == df.original).sum()
+    transcribed_num = len(df)-original_num
+    
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
@@ -86,6 +102,45 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+        
+        {
+            'data': [
+                Bar(
+                    x= category_names,
+                    y= category_counts_1
+                )
+            ],
+
+            'layout':{
+                'title': "Distribution of Messages according to categories",
+                'yaxis': {
+                    'title': 'Count'
+                },
+                'xaxis': {
+                    'title': 'Category',
+                    'tickangle': 30
+                }
+            }
+        },
+        
+        {
+            'data': [
+                Bar(
+                    x=['original_num', 'transcribed_num'] ,
+                    y=[original_num, transcribed_num]
+                )
+            ],
+
+            'layout':{
+                'title': "Counts for original and transcribed messages",
+                'yaxis': {
+                    'title': 'Count'
+                },
+                'xaxis': {
+                    'title': 'Message type'
                 }
             }
         }
