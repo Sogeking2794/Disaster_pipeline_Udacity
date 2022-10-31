@@ -16,7 +16,26 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 import pickle
+import joblib
 
+# Class for VerbExtractor
+class StartingVerbExtractor(BaseEstimator, TransformerMixin):
+
+    def starting_verb(self, text):
+        sentence_list = nltk.sent_tokenize(text)
+        for sentence in sentence_list:
+            pos_tags = nltk.pos_tag(tokenize(sentence))
+            first_word, first_tag = pos_tags[0]
+            if first_tag in ['VB', 'VBP'] or first_word == 'RT':
+                return True
+        return False
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X_tagged = pd.Series(X).apply(self.starting_verb)
+        return pd.DataFrame(X_tagged)
 
 def load_data(database_filepath):
     '''
@@ -83,10 +102,15 @@ def build_model(parameter = {
     '''
 
     pipeline = Pipeline([
-        ('vect', CountVectorizer(tokenizer=tokenize)),
-        ('tfidf', TfidfTransformer()),
+    ("feature", FeatureUnion([
+        ('token_pipeline', Pipeline([
+            ('vect', CountVectorizer(tokenizer=tokenize)),
+            ('tfidf', TfidfTransformer())
+        ])),
+        ('starting_verb', StartingVerbExtractor())
+    ])),
         ('clf', MultiOutputClassifier(clf))
-        ])
+    ])
     
 
     cv = GridSearchCV(
@@ -125,7 +149,7 @@ def save_model(model, model_filepath):
     None
     '''
     with open(model_filepath, 'wb') as f:
-        pickle.dump(model, f)
+        joblib.dump(model.best_estimator_, f, compress=1)
 
 
 def main():
