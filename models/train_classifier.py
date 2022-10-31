@@ -6,7 +6,7 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 
 import nltk
-nltk.download(['punkt', 'wordnet'])
+nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
 
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -87,8 +87,8 @@ def tokenize(text):
 
 
 def build_model(parameter = {
-    'clf__estimator__n_estimators': [50,100],
-    'clf__estimator__min_samples_split': [2,3]},
+    'clf__estimator__n_estimators': [10, 30],
+    'clf__estimator__min_samples_split': [2,4]},
      clf = RandomForestClassifier()):
     '''
     Creates classifier model specified in the Argument
